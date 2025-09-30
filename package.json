@@ -1,0 +1,37 @@
+{
+  "name": "componist/developer-bar",
+  "version": "1.0.0",
+  "description": "Laravel Developer Bar Package with Tailwind CSS",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "watch": "vite build --watch",
+    "preview": "vite preview",
+    "clean": "rm -rf public/build/"
+  },
+  "keywords": [
+    "laravel",
+    "developer-bar",
+    "tailwindcss",
+    "livewire"
+  ],
+  "author": "Componist Developer",
+  "license": "MIT",
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.13",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^4.1.13",
+    "laravel-vite-plugin": "^1.2.0",
+    "vite": "^5.0.0"
+  },
+  "dependencies": {
+    "alpinejs": "^3.15.0"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  }
+}

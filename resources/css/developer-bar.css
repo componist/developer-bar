@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+@source '../views/**/*.blade.php';
+
+
+#name{
+    color: #ff0000;
+}
