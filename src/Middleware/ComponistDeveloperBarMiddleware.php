@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Componist\DeveloperBar\Middleware;
 
 use Closure;
@@ -9,61 +11,67 @@ use Symfony\Component\HttpFoundation\Response;
 class ComponistDeveloperBarMiddleware
 {
     /**
-     * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): Response  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
         $response = $next($request);
-         // Nur im Dev-Modus + nur HTML
-        if (
-            app()->environment('local') &&
-            $response instanceof \Illuminate\Http\Response &&
-            str_contains($response->headers->get('Content-Type'), 'text/html')
-        ) {
-            $content = $response->getContent();
 
-            // Developer Bar HTML einfügen
-            $devBarInjection = view('developer-bar::componist-developer-bar')->render();
-            
-            // Assets aus Manifest laden
-            $manifestPath = __DIR__ . '/../../public/build/manifest.json';
-            $manifest = file_exists($manifestPath) ? json_decode(file_get_contents($manifestPath), true) : null;
-            
-            $cssInjection = '';
-            $jsInjection = '';
-            
-            if ($manifest) {
-                // CSS aus Manifest laden
-                if (isset($manifest['resources/css/developer-bar.css']['file'])) {
-                    $cssFile = $manifest['resources/css/developer-bar.css']['file'];
-                    $cssPath = __DIR__ . '/../../public/build/' . $cssFile;
-                    $cssContent = file_exists($cssPath) ? file_get_contents($cssPath) : '';
-                    $cssInjection = $cssContent ? "<style>{$cssContent}</style>" : '';
-                }
-                
-                // JavaScript aus Manifest laden
-                if (isset($manifest['resources/js/developer-bar.js']['file'])) {
-                    $jsFile = $manifest['resources/js/developer-bar.js']['file'];
-                    $jsPath = __DIR__ . '/../../public/build/' . $jsFile;
-                    $jsContent = file_exists($jsPath) ? file_get_contents($jsPath) : '';
-                    $jsInjection = $jsContent ? "<script>{$jsContent}</script>" : '';
-                }
-            }
-            
-            // CSS in <head> einfügen
-            if (strpos($content, '</head>') !== false) {
-                $content = str_replace('</head>', $cssInjection . '</head>', $content);
-            }
-
-            // JavaScript und Developer Bar vor </body> einfügen
-            if (strpos($content, '</body>') !== false) {
-                $content = str_replace('</body>', $devBarInjection . $jsInjection . '</body>', $content);
-            }
-
-            $response->setContent($content);
+        if (! config('developer-bar.enabled', false)
+            || ! app()->environment('local')
+            || ! config('app.debug')) {
+            return $response;
         }
+
+        if (! $response instanceof \Illuminate\Http\Response) {
+            return $response;
+        }
+
+        $contentType = (string) $response->headers->get('Content-Type', '');
+        if (! str_contains($contentType, 'text/html')) {
+            return $response;
+        }
+
+        $content = $response->getContent();
+        if ($content === false || $content === '') {
+            return $response;
+        }
+
+        $devBarInjection = view('developer-bar::componist-developer-bar')->render();
+
+        $manifestPath = __DIR__.'/../../public/build/manifest.json';
+        $manifest = is_file($manifestPath)
+            ? json_decode((string) file_get_contents($manifestPath), true)
+            : null;
+
+        $cssInjection = '';
+        $jsInjection = '';
+
+        if (is_array($manifest)) {
+            if (isset($manifest['resources/css/developer-bar.css']['file'])) {
+                $cssFile = $manifest['resources/css/developer-bar.css']['file'];
+                $cssPath = __DIR__.'/../../public/build/'.$cssFile;
+                $cssContent = is_file($cssPath) ? file_get_contents($cssPath) : false;
+                $cssInjection = is_string($cssContent) && $cssContent !== '' ? "<style>{$cssContent}</style>" : '';
+            }
+
+            if (isset($manifest['resources/js/developer-bar.js']['file'])) {
+                $jsFile = $manifest['resources/js/developer-bar.js']['file'];
+                $jsPath = __DIR__.'/../../public/build/'.$jsFile;
+                $jsContent = is_file($jsPath) ? file_get_contents($jsPath) : false;
+                $jsInjection = is_string($jsContent) && $jsContent !== '' ? "<script>{$jsContent}</script>" : '';
+            }
+        }
+
+        if (str_contains($content, '</head>')) {
+            $content = str_replace('</head>', $cssInjection.'</head>', $content);
+        }
+
+        if (str_contains($content, '</body>')) {
+            $content = str_replace('</body>', $devBarInjection.$jsInjection.'</body>', $content);
+        }
+
+        $response->setContent($content);
 
         return $response;
     }

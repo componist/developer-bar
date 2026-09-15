@@ -2,8 +2,8 @@
 
 namespace Componist\DeveloperBar\Livewire;
 
+use Componist\DeveloperBar\Application\DeveloperBarService;
 use Livewire\Component;
-use Illuminate\Support\Facades\Artisan;
 
 class ComponistDeveloperBar extends Component
 {
@@ -16,7 +16,7 @@ class ComponistDeveloperBar extends Component
 
     public function clearCache()
     {
-        Artisan::call('optimize:clear');
+        DeveloperBarService::clearApplicationCache();
         $this->message = 'Cache wurde erfolgreich geleert!';
     }
 }

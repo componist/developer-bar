@@ -161,6 +161,30 @@ Customize the appearance by modifying the Blade templates in `resources/views/`:
 └── composer.json                          # Composer package configuration
 ```
 
+## Commands
+
+Keine Artisan-Commands in diesem Package. Asset-Build über npm (`build` / `dev` / `watch`) — siehe „Available Scripts“.
+
+## Berechtigungen
+
+Kein Admin-Gate. Die Bar wird nur injiziert wenn:
+
+- `DEVELOPER_BAR_ENABLED=true` (Config `developer-bar.enabled`)
+- `APP_ENV=local` (bzw. development) **und** sinnvollerweise `APP_DEBUG=true`
+
+Niemals in Staging/Production aktivieren.
+
+## Tests
+
+```bash
+php artisan test --compact --testsuite="Developer Bar"
+```
+
+## Hinweise
+
+- Nur für lokale Entwicklung gedacht — niemals in Staging/Production aktivieren.
+- Assets bei UI-Änderungen neu bauen (`npm run build` im Package bzw. App-Vite-Setup).
+
 ## License
 
 MIT

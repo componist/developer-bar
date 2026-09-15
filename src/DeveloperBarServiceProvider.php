@@ -4,36 +4,37 @@ declare(strict_types=1);
 
 namespace Componist\DeveloperBar;
 
-use Livewire\Livewire;
-use Illuminate\Routing\Router;
-use Illuminate\Contracts\Http\Kernel;
-use Illuminate\Support\Facades\Blade;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\ServiceProvider;
 use Componist\DeveloperBar\Livewire\ComponistDeveloperBar;
 use Componist\DeveloperBar\Middleware\ComponistDeveloperBarMiddleware;
+use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
 
 class DeveloperBarServiceProvider extends ServiceProvider
 {
-    /**
-     * Register services.
-     *
-     * @return void
-     */
-    public function register()
+    public function register(): void
     {
-        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'developer-bar');
+        $this->mergeConfigFrom(__DIR__.'/../config/developer-bar.php', 'developer-bar');
+
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'developer-bar');
 
         Livewire::component('componist-developer-bar', ComponistDeveloperBar::class);
     }
-    /**
-     * Bootstrap services.
-     *
-     * @return void
-     */
-    public function boot()
+
+    public function boot(): void
     {
-        $router = $this->app['router'];
-        $router->pushMiddlewareToGroup('web', ComponistDeveloperBarMiddleware::class);
+        if (! $this->shouldRegisterMiddleware()) {
+            return;
+        }
+
+        $this->app['router']->pushMiddlewareToGroup('web', ComponistDeveloperBarMiddleware::class);
+    }
+
+    private function shouldRegisterMiddleware(): bool
+    {
+        if (! config('developer-bar.enabled', false)) {
+            return false;
+        }
+
+        return $this->app->environment('local') && (bool) config('app.debug');
     }
 }
